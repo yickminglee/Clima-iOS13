@@ -28,6 +28,16 @@ struct WeatherManager {
         //print(urlString)
     }
     
+    func fetchedWeather(latitude: Double, longitute: Double) {
+        ///
+        /// get API url and perform reuest
+        ///
+        
+        let urlString = "\(weatherURL)&lat=\(latitude)&lon=\(longitute)"
+        performRequest(with: urlString)
+        print(urlString)
+    }
+    
     
     func performRequest(with urlString: String) { // note that "with" here is an external parameter name => more readable
         ///
