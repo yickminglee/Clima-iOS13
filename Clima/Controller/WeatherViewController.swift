@@ -7,9 +7,10 @@
 //
 
 import UIKit
+import CoreLocation
 
 
-class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManagerDelegate { // UITextFieldDelegate is a protocol
+class WeatherViewController: UIViewController {
 
     @IBOutlet weak var conditionImageView: UIImageView!
     @IBOutlet weak var temperatureLabel: UILabel!
@@ -17,10 +18,16 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
     @IBOutlet weak var searchTextField: UITextField!
     
     var weatherManager = WeatherManager()
+    let locationManager = CLLocationManager()
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
+        
+        // location
+        locationManager.delegate = self
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestLocation() // this requires locationManager(_:didUpdateLocations:) from CLLocationManagerDelegate Protocol
         
         // Config: search text field informs view controller
         searchTextField.delegate = self
@@ -28,11 +35,27 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
         // define delegate in weatherManager => delegate? is not null => didUpdateWeather is enabled
         weatherManager.delegate = self
     }
+    
+    @IBAction func currentLocationButtonPressed(_ sender: UIButton) {
+        // location
+        locationManager.requestLocation() // this requires locationManager(_:didUpdateLocations:) from CLLocationManagerDelegate Protocol
+    }
+    
+}
 
+
+
+
+//MARK: - UITextFieldDelegate
+
+
+extension WeatherViewController: UITextFieldDelegate {  // UITextFieldDelegate is a protocol
+    
     @IBAction func searchPressed(_ sender: UIButton) {
         searchTextField.endEditing(true)
         print(searchTextField.text!)
     }
+    
     
     // ----------------------------------------------------------------------
     // The following functions are referring to any text field in this view.
@@ -70,6 +93,38 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
     // end
     // ----------------------------------------------------------------------
     
+}
+
+
+//MARK: - LocatioMaagerDelegate
+
+extension WeatherViewController: CLLocationManagerDelegate { // CLLocationManagerDelegate is a Protocol. this allows us to use locationManager(_:didUpdateLocations:) method to obtain location
+    
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
+        if status == .authorizedWhenInUse {
+            locationManager.requestLocation()
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            locationManager.stopUpdatingLocation()
+            let lat = location.coordinate.latitude
+            let lon = location.coordinate.longitude
+            weatherManager.fetchedWeather(latitude: lat, longitute: lon)
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("locationManager Error:: \(error)")
+    }
+
+}
+
+
+//MARK: - WeatherManagerDelegate
+
+extension WeatherViewController: WeatherManagerDelegate {
     
     // when weather is available, do this
     // by convention, in a delegate method, we have the identity of the object (i.e. weatherManager) that caused this method.
@@ -87,4 +142,5 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
     }
     
 }
+
 
